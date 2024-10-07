@@ -232,47 +232,36 @@ public class PdfFrankenstein {
 					continue;
 				}
 
-				if (trimmedLine.endsWith("hotma")) {
-					writer.write(trimmedLine + "il.it");
-					break;
-				}
-
-				if (trimmedLine.endsWith("gmail")) {
-					writer.write(trimmedLine + ".com");
-					break;
-				}
-
-				if (trimmedLine.endsWith("gmail.")) {
-					writer.write(trimmedLine + "com");
-					break;
-				}
-
-				if (trimmedLine.endsWith("gmai")) {
-					writer.write(trimmedLine + "l.com");
-					break;
-				}
-
-				if (trimmedLine.endsWith(".c")) {
-					writer.write(trimmedLine + "om");
-					break;
-				}
-
-				if (trimmedLine.endsWith(".co")) {
-					writer.write(trimmedLine.replaceAll("\\s+", "") + "m");
-					break;
-				}
-
-				if (trimmedLine.endsWith("proton.m")) {
-					writer.write(trimmedLine + "e");
-					break;
+				switch (getSuffix(trimmedLine)) {
+					case "hotma":
+						writer.write(trimmedLine + "il.it");
+						break;
+					case "gmail":
+						writer.write(trimmedLine + ".com");
+						break;
+					case "gmail.":
+						writer.write(trimmedLine + "com");
+						break;
+					case "gmai":
+						writer.write(trimmedLine + "l.com");
+						break;
+					case ".c":
+						writer.write(trimmedLine + "om");
+						break;
+					case ".co":
+						writer.write(trimmedLine.replaceAll("\\s+", "") + "m");
+						break;
+					case "proton.m":
+						writer.write(trimmedLine + "e");
+						break;
 				}
 
 				if (trimmedLine.replaceAll("\\s+", "").matches(EMAIL_REGEX)) {
 					writer.write(trimmedLine.replaceAll("\\s+", ""));
 					break;
 				}
-				
-				if(count == 2 && !trimmedLine.matches(EMAIL_REGEX)) {
+
+				if (count == 2 && !trimmedLine.matches(EMAIL_REGEX)) {
 					writer.write(System.getProperty("line.separator"));
 					break;
 				}
@@ -282,6 +271,24 @@ public class PdfFrankenstein {
 				count++;
 			}
 		}
+	}
+
+	private static String getSuffix(String line) {
+		if (line.endsWith("hotma"))
+			return "hotma";
+		if (line.endsWith("gmail"))
+			return "gmail";
+		if (line.endsWith("gmail."))
+			return "gmail.";
+		if (line.endsWith("gmai"))
+			return "gmai";
+		if (line.endsWith(".c"))
+			return ".c";
+		if (line.endsWith(".co"))
+			return ".co";
+		if (line.endsWith("proton.m"))
+			return "proton.m";
+		return "";
 	}
 
 	public void pdfLoop() throws IOException {
