@@ -43,29 +43,30 @@ public class PdfFrankenstein {
 	public static final String EMAIL_REGEX = "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$";
 	public static final String TEL_REGEX = "^(?:\\+?\\d{1,4}[ -]?|\\(?\\d{1,4}\\)?[ -]?)(?:\\d{1,4}[ -]?)*\\d{1,4}$";
 
-	public static final String[] LINES_TO_REMOVE = { "CONTATTI", "C O N T", "Ho", "program", "• ", "lavorando",
-			"migliorato", "scrum", "Unit of", "Junior", "J A V A", "Java", "J U N I O R", "unior", "JQuery", "relazion",
-			"Macomer", "Via", "J unior", "istruz", "ambito", "FORMAZIONE", "rmazione", "ormazione", "str.", "Gener",
-			"FFOO", "F O R M", "FO R", "Pazienza", "Corso", "D igit", "Archi", "FOT", "appli", "FTO", "INFO", "Latina",
-			"Roma", "voc", "piove", "organizzato", "G E N E R", "Appreso", "HTML", "inoltre" };
+	public static final List<String> LINES_TO_REMOVE = List.of("CONTATTI", "C O N T", "Ho", "program", "• ",
+			"lavorando", "migliorato", "scrum", "Unit of", "Junior", "J A V A", "Java", "J U N I O R", "unior",
+			"JQuery", "relazion", "Macomer", "Via", "J unior", "istruz", "ambito", "FORMAZIONE", "rmazione",
+			"ormazione", "str.", "Gener", "FFOO", "F O R M", "FO R", "Pazienza", "Corso", "D igit", "Archi", "FOT",
+			"appli", "FTO", "INFO", "Latina", "Roma", "voc", "piove", "organizzato", "G E N E R", "Appreso", "HTML",
+			"inoltre");
 
-	public static final String[] LINKS_TO_REMOVE = { "http", "github", "link", ".www", "www.", "About", "profilo",
-			"Durante", "il corso", "attiv", "maora", "PROFILO" };
+	public static final List<String> LINKS_TO_REMOVE = List.of("http", "github", "link", ".www", "www.", "About",
+			"profilo", "Durante", "il corso", "attiv", "maora", "PROFILO");
 
 	public static void main(String[] args) throws IOException {
 		Date start = new Date();
 		System.out.println("Start: " + start);
 
-		new PdfFrankenstein().createDirectoryIfNotExists(OUTDIR.getAbsolutePath());
-		new PdfFrankenstein().createDirectoryIfNotExists(OUTEXC.getAbsolutePath());
-		new PdfFrankenstein().createDirectoryIfNotExists(MOVED.getAbsolutePath());
+		createDirectoryIfNotExists(OUTDIR.getAbsolutePath());
+		createDirectoryIfNotExists(OUTEXC.getAbsolutePath());
+		createDirectoryIfNotExists(MOVED.getAbsolutePath());
 
-		new PdfFrankenstein().pdfLoop();
+		pdfLoop();
 		System.out.println();
-		new PdfFrankenstein().createExc();
+		createExc();
 		System.out.println();
 
-		new PdfFrankenstein().moveFiles();
+		moveFiles();
 		System.out.println();
 
 		try {
@@ -80,7 +81,8 @@ public class PdfFrankenstein {
 		System.out.println("Elapsed time: " + (end.getTime() - start.getTime() + "ms"));
 	}
 
-	public void parsePdf(float x, float y, float width, float height, String pdf, String txt) throws IOException {
+	public static void parsePdf(float x, float y, float width, float height, String pdf, String txt)
+			throws IOException {
 		Rectangle rect = new Rectangle(x, y, width, height);
 		RenderFilter filter = new RegionTextRenderFilter(rect);
 		PdfReader reader = null;
@@ -100,7 +102,8 @@ public class PdfFrankenstein {
 		}
 	}
 
-	public void cutPdf(String[] lineToRemove, String[] linksToRemoveEnd, String upd, String flt, Boolean append)
+	public static void cutPdf(List<String> lineToRemove, List<String> linksToRemoveEnd, String upd, String flt,
+			Boolean append)
 			throws IOException {
 		String fileName = new File(upd).getName();
 		String outTxt = flt + fileName.replace("-upd.txt", "-flt.txt");
@@ -118,7 +121,7 @@ public class PdfFrankenstein {
 
 			Integer count = 0;
 
-			outerloop: while ((currentLine = reader.readLine()) != null) {
+			while ((currentLine = reader.readLine()) != null) {
 				String trimmedLine = currentLine.trim();
 
 				if (trimmedLine.isBlank() || trimmedLine.length() == 1
@@ -126,21 +129,19 @@ public class PdfFrankenstein {
 						|| trimmedLine.contains("gennaio")) {
 					nextLine = readerNextLine.readLine();
 					count++;
-					continue outerloop;
+					continue;
 				}
 
-				for (String elem : lineToRemove) {
-					if (trimmedLine.toUpperCase().startsWith(elem.toUpperCase())) {
-						nextLine = readerNextLine.readLine();
-						count++;
-						continue outerloop;
-					}
+				if (lineToRemove.stream().map(String::toUpperCase).anyMatch(trimmedLine.toUpperCase()::startsWith)) {
+					nextLine = readerNextLine.readLine();
+					count++;
+					continue;
 				}
 
 				if (trimmedLine.equals("+39")) {
 					nextLine = readerNextLine.readLine();
 					count++;
-					continue outerloop;
+					continue;
 				}
 
 				if (trimmedLine.startsWith("39-") || trimmedLine.matches(TEL_REGEX)) {
@@ -148,18 +149,18 @@ public class PdfFrankenstein {
 					writer.write(tempLine.trim() + System.getProperty("line.separator"));
 					nextLine = readerNextLine.readLine();
 					count++;
-					continue outerloop;
+					continue;
 				}
 
 				if ((emailBig = trimmedLine.replaceAll("\\s+", "")).matches(EMAIL_REGEX)) {
 					if ((nextLine = readerNextLine.readLine()) != null) {
 						if (nextLine.matches(TEL_REGEX)) {
 							writer.write(nextLine.trim() + System.getProperty("line.separator") + emailBig);
-							break outerloop;
+							break;
 						}
 					} else {
 						writer.write(emailBig + System.getProperty("line.separator"));
-						break outerloop;
+						break;
 					}
 				}
 
@@ -171,21 +172,20 @@ public class PdfFrankenstein {
 						currentLine = reader.readLine();
 						nextLine = readerNextLine.readLine();
 						count++;
-						continue outerloop;
+						continue;
 					}
 
 					String email = trimmedLine.trim() + nextLine.trim();
 
 					if ((emailBig = email.replaceAll("\\s+", "")).matches(EMAIL_REGEX)) {
 						writer.write(emailBig + System.getProperty("line.separator"));
-						break outerloop;
+						break;
 					}
 				}
 
-				for (String elem : linksToRemoveEnd) {
-					if (trimmedLine.toUpperCase().startsWith(elem.toUpperCase())) {
-						break outerloop;
-					}
+				if (linksToRemoveEnd.stream().map(String::toUpperCase)
+						.anyMatch(trimmedLine.toUpperCase()::startsWith)) {
+					break;
 				}
 				writer.write(trimmedLine.trim() + System.getProperty("line.separator"));
 
@@ -194,7 +194,7 @@ public class PdfFrankenstein {
 		}
 	}
 
-	public void fixPdf(String flt, String fix) throws IOException {
+	public static void fixPdf(String flt, String fix) throws IOException {
 		String fileName = new File(flt).getName();
 		String outTxt = fix + fileName.replace("-flt.txt", "-fix.txt");
 
@@ -291,7 +291,7 @@ public class PdfFrankenstein {
 		return "";
 	}
 
-	public void pdfLoop() throws IOException {
+	public static void pdfLoop() throws IOException {
 		File dir = INDIR;
 		File[] directoryListing = dir.listFiles();
 
@@ -327,13 +327,15 @@ public class PdfFrankenstein {
 		}
 	}
 
-	public void createExc() throws IOException {
+	public static void createExc() throws IOException {
 		File dir = OUTDIR;
 		File[] directoryListing = dir.listFiles();
 
 		try (Workbook workbook = new HSSFWorkbook()) {
-			Sheet sheet = workbook.createSheet("Email");
+			Sheet sheet = workbook.createSheet("Gen_Italy");
+			Sheet errSheet = workbook.createSheet("Errati");
 			int rowIndex = 0;
+			int errRowIndex = 0;
 
 			if (directoryListing != null) {
 				for (File child : directoryListing) {
@@ -352,10 +354,12 @@ public class PdfFrankenstein {
 							while ((currentLine = reader.readLine()) != null) {
 								if (currentLine.matches(EMAIL_REGEX)) {
 									if (count == 1) {
-										Row row = sheet.createRow(rowIndex++);
+										Row row = errSheet.createRow(rowIndex++);
 										row.createCell(0).setCellValue("");
 									}
-									email = currentLine;
+									if (count == 2) {
+										email = currentLine;
+									}
 								} else {
 									if (count == 0) {
 										firstField = currentLine;
@@ -366,15 +370,28 @@ public class PdfFrankenstein {
 								}
 							}
 						}
-						if (firstField != null || secondField != null || email != null) {
+						if ((firstField != null && !firstField.isEmpty() && !firstField.isBlank())
+								&& (secondField != null && !secondField.isEmpty() && !secondField.isBlank())
+								&& (email != null && email.matches(EMAIL_REGEX))) {
 							Row row = sheet.createRow(rowIndex++);
-							row.createCell(0).setCellValue(firstField != null ? firstField : "");
-							row.createCell(1).setCellValue(secondField != null ? secondField : "");
+							row.createCell(0).setCellValue(firstField);
+							row.createCell(1).setCellValue(secondField);
+							row.createCell(2).setCellValue(email);
+						} else {
+							Row row = errSheet.createRow(errRowIndex++);
+							row.createCell(0)
+									.setCellValue((firstField != null && !firstField.isEmpty() && !firstField.isBlank())
+											? firstField
+											: "");
+							row.createCell(1).setCellValue(
+									(secondField != null && !secondField.isEmpty() && !secondField.isBlank())
+											? secondField
+											: "");
 							row.createCell(2).setCellValue(email != null ? email : "");
 						}
 					}
 				}
-				try (FileOutputStream writer = new FileOutputStream(OUTEXC + "/out.xls")) {
+				try (FileOutputStream writer = new FileOutputStream(OUTEXC + "/Gen_Italy.xls")) {
 					workbook.write(writer);
 				}
 			} else {
@@ -383,7 +400,7 @@ public class PdfFrankenstein {
 		}
 	}
 
-	public boolean isValidDate(String inDate) {
+	public static boolean isValidDate(String inDate) {
 
 		List<String> formatStrings = Arrays.asList("dd/MM/yyyy", "dd MMMM yyyy", "dd-MM-yyyy");
 
@@ -401,7 +418,7 @@ public class PdfFrankenstein {
 		return false;
 	}
 
-	private void createDirectoryIfNotExists(String directoryPath) throws IOException {
+	private static void createDirectoryIfNotExists(String directoryPath) throws IOException {
 		File dir = new File(directoryPath);
 		if (!dir.exists()) {
 			if (dir.mkdirs()) {
@@ -421,46 +438,35 @@ public class PdfFrankenstein {
 		}
 	}
 
-	public boolean validFile(File inputFile) throws IOException {
-		try (BufferedReader reader = new BufferedReader(new FileReader(inputFile))) {
+	public static boolean validFile(File inputFile) throws IOException {
+		try (BufferedReader reader = new BufferedReader(new FileReader(inputFile));
+				BufferedReader readerNextLine = new BufferedReader(new FileReader(inputFile))) {
 			String currentLine;
+			String nextLine = readerNextLine.readLine();
 			Integer count = 0;
 
 			while ((currentLine = reader.readLine()) != null && count < 3) {
-				if (currentLine.isBlank() || currentLine.isEmpty() || currentLine.contains("francescasoleti")) {
+				if (currentLine.isBlank() || currentLine.isEmpty() || currentLine == null) {
+					return false;
+				}
+
+				nextLine = readerNextLine.readLine();
+				if (count == 1 && (nextLine == null || nextLine.isEmpty() || nextLine.isBlank())) {
+					return false;
+				}
+				if (count == 2 && currentLine != null && !currentLine.matches(EMAIL_REGEX)) {
 					return false;
 				}
 				count++;
+			}
+			if (count == 0) {
+				return false;
 			}
 		}
 		return true;
 	}
 
-	public void restoreTempFiles(File indir) throws IOException {
-
-		File[] filesInDir = indir.listFiles();
-
-		if (filesInDir != null) {
-			for (File file : filesInDir) {
-				String fileName = file.getName();
-				if (fileName.startsWith("temp_")) {
-
-					String originalFileName = fileName.substring(5);
-					Path originalFilePath = Paths.get(INDIR.getAbsolutePath(), originalFileName);
-					Files.move(file.toPath(), originalFilePath, StandardCopyOption.REPLACE_EXISTING);
-					System.out.println("Restored file: " + originalFileName);
-				}
-
-				if (fileName.endsWith(".txt") && indir == INDIR) {
-					Files.delete(file.toPath());
-				}
-			}
-		}
-	}
-
-	public void moveFiles() throws IOException {
-		restoreTempFiles(INDIR);
-		restoreTempFiles(OUTDIR);
+	public static void moveFiles() throws IOException {
 
 		File dir = OUTDIR;
 		File[] directoryListing = dir.listFiles();

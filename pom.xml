@@ -3,8 +3,8 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.advanciastage</groupId>
-	<artifactId>pdf</artifactId>
-	<version>Frankenstein</version>
+	<artifactId>pdf_Frankenstein</artifactId>
+	<version>1.0</version>
 	<name>pdf</name>
 	<dependencies>
 		<!-- https://mvnrepository.com/artifact/com.itextpdf/itextpdf -->
@@ -66,6 +66,20 @@
 					</execution>
 				</executions>
 			</plugin>
+			
+			<plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <version>3.2.1</version>
+            <executions>
+                <execution>
+                    <id>attach-sources</id>
+                    <goals>
+                        <goal>jar</goal>
+                    </goals>
+                </execution>
+            </executions>
+        </plugin>
 		</plugins>
 	</build>
 </project>
